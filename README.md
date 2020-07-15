@@ -1,1 +1,2 @@
-# WordPress_Plugin_Framework
+# WordPress Plugin Framework  
+Work in progress...  
