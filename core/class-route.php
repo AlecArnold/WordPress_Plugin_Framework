@@ -52,47 +52,17 @@ class Route {
 	/**
 	 *
 	 */
-	protected $controller;
+	protected $callback;
 
 	/**
 	 *
 	 */
-	protected $is_controller_reflector_prepared = false;
+	protected $is_callback_reflector_prepared = false;
 
 	/**
 	 *
 	 */
-	protected $controller_reflector;
-
-	/**
-	 *
-	 */
-	protected $model;
-
-	/**
-	 *
-	 */
-	protected $is_model_reflector_prepared = false;
-
-	/**
-	 *
-	 */
-	protected $model_reflector;
-
-	/**
-	 *
-	 */
-	protected $view;
-
-	/**
-	 *
-	 */
-	protected $is_view_reflector_prepared = false;
-
-	/**
-	 *
-	 */
-	protected $view_reflector;
+	protected $callback_reflector;
 
 	/**
 	 *
@@ -127,19 +97,10 @@ class Route {
 		}
 
 		//
-		if ( isset( $route_options['controller'] ) ) {
-			$this->set_controller( $route_options['controller'] );
+		if ( isset( $route_options['callback'] ) ) {
+			$this->set_callback( $route_options['callback'] );
 		}
 
-		//
-		if ( isset( $route_options['model'] ) ) {
-			$this->set_model( $route_options['model'] );
-		}
-
-		//
-		if ( isset( $route_options['view'] ) ) {
-			$this->set_view( $route_options['view'] );
-		}
 	}
 
 	/** =====================================================================
@@ -320,268 +281,61 @@ class Route {
 		return array_validate_items(
 			function( $query_var ) {
 				$callable = $query_var['middleware']->get_callable();
-				return ! $query_var['middleware']->has_callable_reference() || ( is_callable( $callable ) && call_user_func_array( $callable, array( $this, $query_var['value'] ) ) );
+				return ! $query_var['middleware']->has_callable_reference() || ( is_callable( $callable ) && call_user_func_array( $callable, array( $query_var['value'], $this ) ) );
 			},
 			$this->populate_query_vars_values_using_url_path( $url_path )
 		);
 	}
 
 	/** =====================================================================
-	 * Controller
+	 * Callback
 	 * ---------------------------------------------------------------------- */
 
 	/**
 	 *
 	 */
-	public function set_controller( $controller ) {
-		$this->controller                       = $controller;
-		$this->is_controller_reflector_prepared = false;
+	public function set_callback( $callback ) {
+		$this->callback                       = $callback;
+		$this->is_callback_reflector_prepared = false;
 	}
 
 	/**
 	 *
 	 */
-	public function has_controller() {
-		return ! empty( $this->get_controller() );
+	public function has_callback() {
+		return ! empty( $this->get_callback() );
 	}
 
 	/**
 	 *
 	 */
-	public function get_controller() {
-		return $this->controller;
+	public function get_callback() {
+		return $this->callback;
 	}
 
 	/**
 	 *
 	 */
-	public function prepare_controller_reflector() {
-		$this->controller_reflector             = new Callable_Reference_Reflector( $this->get_controller() );
-		$this->is_controller_reflector_prepared = true;
+	public function prepare_callback_reflector() {
+		$this->callback_reflector             = new Callable_Reference_Reflector( $this->get_callback() );
+		$this->is_callback_reflector_prepared = true;
 	}
 
 	/**
 	 *
 	 */
-	public function has_controller_reflector() {
-		return ! empty( $this->get_controller_reflector() );
+	public function has_callback_reflector() {
+		return ! empty( $this->get_callback_reflector() );
 	}
 
 	/**
 	 *
 	 */
-	public function get_controller_reflector() {
-		if ( ! $this->is_controller_reflector_prepared ) {
-			$this->prepare_controller_reflector();
+	public function get_callback_reflector() {
+		if ( ! $this->is_callback_reflector_prepared ) {
+			$this->prepare_callback_reflector();
 		}
-		return $this->controller_reflector;
-	}
-
-	/**
-	 *
-	 */
-	public function has_controller_class() {
-		return $this->get_controller_reflector()->is_class_reference();
-	}
-
-	/**
-	 *
-	 */
-	public function get_controller_class_name() {
-		return $this->get_controller_reflector()->get_class_name();
-	}
-
-	/**
-	 *
-	 */
-	public function has_controller_method() {
-		return $this->get_controller_reflector()->has_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_controller_method() {
-		return $this->get_controller_reflector()->get_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_controller_instance() {
-		return $this->get_controller_reflector()->get_class_instance();
-	}
-
-	/** =====================================================================
-	 * Model
-	 * ---------------------------------------------------------------------- */
-
-	/**
-	 *
-	 */
-	public function set_model( $model ) {
-		$this->model                       = $model;
-		$this->is_model_reflector_prepared = false;
-	}
-
-	/**
-	 *
-	 */
-	public function has_model() {
-		return ! empty( $this->get_model() );
-	}
-
-	/**
-	 *
-	 */
-	public function get_model() {
-		return $this->model;
-	}
-
-	/**
-	 *
-	 */
-	public function prepare_model_reflector() {
-		$this->model_reflector             = new Callable_Reference_Reflector( $this->get_model() );
-		$this->is_model_reflector_prepared = true;
-	}
-
-	/**
-	 *
-	 */
-	public function has_model_reflector() {
-		return ! empty( $this->get_model_reflector() );
-	}
-
-	/**
-	 *
-	 */
-	public function get_model_reflector() {
-		if ( ! $this->is_model_reflector_prepared ) {
-			$this->prepare_model_reflector();
-		}
-		return $this->model_reflector;
-	}
-
-	/**
-	 *
-	 */
-	public function has_model_class() {
-		return $this->get_model_reflector()->is_class_reference();
-	}
-
-	/**
-	 *
-	 */
-	public function get_model_class_name() {
-		return $this->get_model_reflector()->get_class_name();
-	}
-
-	/**
-	 *
-	 */
-	public function has_model_method() {
-		return $this->get_model_reflector()->has_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_model_method() {
-		return $this->get_model_reflector()->get_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_model_instance() {
-		return $this->get_model_reflector()->get_class_instance();
-	}
-
-	/** =====================================================================
-	 * View
-	 * ---------------------------------------------------------------------- */
-
-	/**
-	 *
-	 */
-	public function set_view( $view ) {
-		$this->view                       = $view;
-		$this->is_view_reflector_prepared = false;
-	}
-
-	/**
-	 *
-	 */
-	public function has_view() {
-		return ! empty( $this->get_view() );
-	}
-
-	/**
-	 *
-	 */
-	public function get_view() {
-		return $this->view;
-	}
-
-	/**
-	 *
-	 */
-	public function prepare_view_reflector() {
-		$this->view_reflector             = new Callable_Reference_Reflector( $this->get_view() );
-		$this->is_view_reflector_prepared = true;
-	}
-
-	/**
-	 *
-	 */
-	public function has_view_reflector() {
-		return ! empty( $this->get_view_reflector() );
-	}
-
-	/**
-	 *
-	 */
-	public function get_view_reflector() {
-		if ( ! $this->is_view_reflector_prepared ) {
-			$this->prepare_view_reflector();
-		}
-		return $this->view_reflector;
-	}
-
-	/**
-	 *
-	 */
-	public function has_view_class() {
-		return $this->get_view_reflector()->is_class_reference();
-	}
-
-	/**
-	 *
-	 */
-	public function get_view_class_name() {
-		return $this->get_view_reflector()->get_class_name();
-	}
-
-	/**
-	 *
-	 */
-	public function has_view_method() {
-		return $this->get_view_reflector()->has_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_view_method() {
-		return $this->get_view_reflector()->get_class_method();
-	}
-
-	/**
-	 *
-	 */
-	public function get_view_instance() {
-		return $this->get_view_reflector()->get_class_instance();
+		return $this->callback_reflector;
 	}
 
 	/** =====================================================================
@@ -633,48 +387,8 @@ class Route {
 	/**
 	 *
 	 */
-	public function dispatch() {
-
-		//
-		if ( $this->has_controller_class() ) {
-			$controller_instance = $this->get_controller_instance();
-
-			//
-			if ( $this->has_model() ) {
-				$controller_instance->set_model( $this->get_model_instance() );
-			}
-
-			//
-			if ( $this->has_view() ) {
-				$controller_instance->set_view( $this->get_view_instance() );
-			}
-
-			//
-			if ( $this->has_controller_method() ) {
-				$controller_method = $this->get_controller_method();
-				$controller_instance->$controller_method();
-			}
-		} elseif ( $this->has_model_class() ) {
-			$model_instance = $this->get_model_instance();
-
-			//
-			if ( $this->has_view() ) {
-				$model_instance->set_view( $this->get_view_instance() );
-			}
-
-			//
-			if ( $this->has_model_method() ) {
-				$model_method = $this->get_model_method();
-				$model_instance->$model_method();
-			}
-		} elseif ( $this->has_view_class() ) {
-			$view_instance = $this->get_view_instance();
-
-			if ( $this->has_view_method() ) {
-				$view_method = $this->get_view_method();
-				$view_instance->$view_method();
-			}
-		}
+	public function dispatch( $url_path = null ) {
+		return $this->has_callback_reflector() ? call_user_func_array( $this->get_callback_reflector()->get_callable(), $this->get_query_vars_for_url_path( $url_path ) ) : null;
 	}
 
 }

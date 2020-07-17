@@ -146,7 +146,7 @@ class Router {
 			$wp->query_vars    = $page_route->get_query_vars_for_url_path( Request::get_url_path() );
 			$wp->matched_rule  = $page_route->get_url_path_regex();
 			$wp->matched_query = $page_route->get_url_path_rewrite();
-			$page_route->dispatch();
+			$page_route->dispatch( Request::get_url_path() );
 		}
 	}
 

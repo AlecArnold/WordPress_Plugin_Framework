@@ -69,11 +69,17 @@ function array_cast( $value, $key = false ) {
 	if ( is_array( $value ) ) {
 
 		//
-		if ( $key ) {
-			$value = array( $key => $value );
+		if ( $key && ! isset( $value[ $key ] ) ) {
+			$value[ $key ] = null;
 		}
 	} else { //
-		$value = array( $value );
+
+		//
+		if ( $key ) {
+			$value = array( $key => $value );
+		} else {
+			$value = array( $value );
+		}
 	}
 	return $value;
 }
