@@ -65,7 +65,11 @@ class Config {
 	}
 
 	/**
+	 * Determines whether a config file has already been loaded.
 	 *
+	 * @param string $name The identifier used to reference the config file.
+	 *
+	 * @return bool Whether the config with the provided ID has been loaded.
 	 */
 	public static function has_config_loaded( $name ) {
 		return isset( self::$config[ $name ] );

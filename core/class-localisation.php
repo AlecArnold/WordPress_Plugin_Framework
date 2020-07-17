@@ -5,10 +5,7 @@ namespace Plugin_Name\Core;
 use Plugin_Name;
 
 /**
- * Define the internationalization functionality.
- *
- * Loads and defines the internationalization files for this plugin
- * so that it is ready for translation.
+ * Handles the translation of the plugin text.
  *
  * @package Plugin_Name
  */
@@ -47,7 +44,7 @@ class Localisation {
 	}
 
 	/**
-	 *
+	 * Hooks the WordPress action used to translate the plugin.
 	 */
 	public static function hook_plugin_localisation() {
 		add_action( 'plugins_loaded', array( self::class, 'wp_action_load_plugin_textdomain' ) );

@@ -83,3 +83,16 @@ function array_cast( $value, $key = false ) {
 	}
 	return $value;
 }
+
+
+/**
+ *
+ */
+function array_column_keep_keys( $array, $key ) {
+	return array_map(
+		function ( $item ) use ( $key ) {
+			return isset( $item[ $key ] ) ? $item[ $key ] : null;
+		},
+		$array
+	);
+}

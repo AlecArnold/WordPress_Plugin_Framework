@@ -74,7 +74,9 @@ class Classes {
 	}
 
 	/**
+	 * Retrieves all of the available file prefixes.
 	 *
+	 * @return array An array containing all of the available file prefixes.
 	 */
 	protected static function get_file_prefixes() {
 		return array(
@@ -144,16 +146,6 @@ class Classes {
 	}
 
 	/**
-	 *
-	 */
-	public static function get_class_key_for_file_path( $path, $prefix = 'class-' ) {
-		$class_key = basename( $path, '.php' );
-		$class_key = str_replace( $prefix, '', $class_key ); // Remove the file extension.
-		$class_key = str_replace( '-', '_', $class_key ); // Replace dashes with underscores.
-		return $class_key;
-	}
-
-	/**
 	 * Generate a list of all the classes within a directory.
 	 *
 	 * @param string $directory The directory to search for classes within.
@@ -170,7 +162,7 @@ class Classes {
 
 			// Add the classes for the provided directory.
 			foreach ( glob( $directory . '/' . $prefix . '*.php' ) as $class_file_path ) {
-				$classes[ self::get_class_key_for_file_path( $class_file_path, $prefix ) ] = self::get_class_for_file_path( $class_file_path, $prefix );
+				$classes[] = self::get_class_for_file_path( $class_file_path, $prefix );
 			}
 
 			// Handle adding subdirectory classes when required.
