@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing functions.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -6,8 +11,6 @@ use Plugin_Name;
 
 /**
  * Handles the plugin functions.
- *
- * @package Plugin_Name
  */
 class Functions {
 

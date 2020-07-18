@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing an individual route.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -10,8 +15,6 @@ use function Plugin_Name\Functions\Array_Utils\array_validate_items;
 
 /**
  * Handles individual routes within this plugin.
- *
- * @package Plugin_Name
  */
 class Route {
 
@@ -241,7 +244,7 @@ class Route {
 	/**
 	 * Retrieves the route middleware.
 	 *
-	 * @return Callable_Reference_Reflector The route middleware.
+	 * @return array An array with all of the route middleware.
 	 */
 	public function get_middleware() {
 		if ( ! $this->is_middleware_prepared ) {

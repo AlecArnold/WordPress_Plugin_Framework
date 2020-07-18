@@ -1,11 +1,14 @@
 <?php
+/**
+ * Includes the class for managing the request.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
 /**
  * Handles details associated with the session request.
- *
- * @package Plugin_Name
  */
 class Request {
 

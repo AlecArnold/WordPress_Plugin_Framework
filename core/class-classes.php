@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing classes.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -8,8 +13,6 @@ use ReflectionException;
 
 /**
  * Includes all methods required for loading plugin classes.
- *
- * @package Plugin_Name
  */
 class Classes {
 

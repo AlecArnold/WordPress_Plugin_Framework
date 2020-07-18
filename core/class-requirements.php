@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing plugin requirements.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -7,8 +12,6 @@ use WP_Error;
 
 /**
  * Handles validating the PHP version, WP version, multisite and installed plugin requirements.
- *
- * @package Plugin_Name
  */
 class Requirements {
 

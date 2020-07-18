@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing config options.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -7,8 +12,6 @@ use function Plugin_Name\Functions\Array_Utils\array_traverse;
 
 /**
  * Handles the plugin config variables.
- *
- * @package Plugin_Name
  */
 class Config {
 
@@ -56,11 +59,14 @@ class Config {
 	/**
 	 * Handles the retrieval of the config item.
 	 *
-	 * @param string $name The name of the config file.
-	 * @param array  $path The path to an individual item within the config array.
+	 * @param string $dot_path The path to the desired variable. Where the first section is the file name and the
+	 * remaining sections is the path to an individual item within the config array.
+	 *
 	 * @return mixed The config value.
 	 */
-	public static function get_config( $name, $path = array() ) {
+	public static function get_config( $dot_path ) {
+		$path = explode( '.', $dot_path );
+		$name = array_shift( $path );
 		return array_traverse( self::get_loaded_config( $name ), $path );
 	}
 

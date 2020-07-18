@@ -36,7 +36,7 @@ use Plugin_Name\Core\Requirements;
 use Plugin_Name\Core\Router;
 
 /**
- * .・゜゜・ Make Magic Happen ・゜゜・．
+ * Ensure that this plugin isn't already active.
  */
 if ( ! class_exists( 'Plugin_Name' ) ) {
 
@@ -129,7 +129,7 @@ if ( ! class_exists( 'Plugin_Name' ) ) {
 		}
 
 		/**
-		 * Deactivates the plugin.
+		 * Activates the plugin.
 		 */
 		public static function activate() {
 			activate_plugins( self::get_plugin_basename() );

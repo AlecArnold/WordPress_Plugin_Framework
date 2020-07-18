@@ -1,4 +1,9 @@
 <?php
+/**
+ * Includes the class for managing the plugins routes.
+ *
+ * @package Plugin_Name
+ */
 
 namespace Plugin_Name\Core;
 
@@ -6,8 +11,6 @@ use WP;
 
 /**
  * Handles all of the routes within this plugin.
- *
- * @package Plugin_Name
  */
 class Router {
 
