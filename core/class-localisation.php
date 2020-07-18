@@ -24,7 +24,7 @@ class Localisation {
 	/**
 	 * Handle the construction of the static Localisation object.
 	 */
-	public static function __constructStatic() {
+	public static function static_constructor() {
 		self::set_domain( Plugin_Name::PLUGIN_ID );
 	}
 

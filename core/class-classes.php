@@ -65,7 +65,7 @@ class Classes {
 		// Handle any errors caused by the attempt to load the constructor.
 		try {
 			$reflection_class  = new ReflectionClass( $class_path );
-			$reflection_method = $reflection_class->getMethod( '__constructStatic' ); // Could use $reflection_class->getShortName() to copy c# and java.
+			$reflection_method = $reflection_class->getMethod( 'static_constructor' ); // Could use $reflection_class->getShortName() to copy c# and java.
 
 			// Check whether the method meets the requirements for a static constructor.
 			if ( $reflection_method->isStatic() && 0 === $reflection_method->getNumberOfParameters() && ! $reflection_method->isAbstract() ) {

@@ -24,7 +24,7 @@ class Router {
 	/**
 	 * Defines all of the existing routes for this plugin.
 	 */
-	public static function __constructStatic() {
+	public static function static_constructor() {
 		self::add_routes( Config::get_config( 'routes' ) );
 	}
 
@@ -46,7 +46,7 @@ class Router {
 	 * @param array|Route $route    The route to add.
 	 */
 	public static function add_route( $route_id, $route ) {
-		self::$routes[ $route_id ] = is_a( $route, 'Route' ) ? $route : new Route( $route ); // todo test
+		self::$routes[ $route_id ] = is_a( $route, 'Route' ) ? $route : new Route( $route );
 	}
 
 	/**

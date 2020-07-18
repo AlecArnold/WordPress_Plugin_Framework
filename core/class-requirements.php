@@ -88,7 +88,7 @@ class Requirements {
 	/**
 	 * Handles the static construction event for this class.
 	 */
-	public static function __constructStatic() {
+	public static function static_constructor() {
 		self::set_requirements( Config::get_config( 'requirements' ) );
 	}
 

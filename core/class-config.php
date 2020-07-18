@@ -32,7 +32,7 @@ class Config {
 	/**
 	 * Handle the construction of the static Config object.
 	 */
-	public static function __constructStatic() {
+	public static function static_constructor() {
 		self::set_config_path( Plugin_Name::get_plugin_path( 'config/' ) );
 	}
 
