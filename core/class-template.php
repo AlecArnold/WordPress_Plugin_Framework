@@ -134,13 +134,22 @@ class Template {
 	}
 
 	/**
+	 * Retrieves the content for the template.
+	 *
+	 * @return string The content for the template.
+	 */
+	public function get_template_content() {
+		ob_start();
+		$this->render();
+		return ob_get_clean();
+	}
+
+	/**
 	 * Renders the template.
 	 *
-	 * @param boolean $return Whether to output the template or to return it as a string. Default: `false`.
-	 *
-	 * @return string|bool Whether the template was successfully rendered or the content of the template.
+	 * @return bool Whether the template was successfully rendered.
 	 */
-	public function render( $return = false ) {
+	public function render() {
 
 		// Ensure that the template file exists.
 		if ( $this->is_template_path_valid() ) {
@@ -150,15 +159,9 @@ class Template {
 				extract( $this->get_template_variables() );
 			}
 
-			// Handle whether to return or render the output.
-			if ( $return ) {
-				ob_start();
-				include $this->get_template_path();
-				return ob_get_clean();
-			} else {
-				include $this->get_template_path();
-				return true;
-			}
+			// Renders the template.
+			include $this->get_template_path();
+			return true;
 		}
 		return false;
 	}
