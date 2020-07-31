@@ -156,7 +156,7 @@ class Template {
 
 			// Ensure that there are variables to include in the template.
 			if ( $this->has_template_variables() ) {
-				extract( $this->get_template_variables() );
+				extract( $this->get_template_variables() ); // phpcs:ignore
 			}
 
 			// Renders the template.

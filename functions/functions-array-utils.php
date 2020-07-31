@@ -64,6 +64,20 @@ function array_replace_matches( $array, $regex, $subject ) {
 }
 
 /**
+ *
+ */
+function array_build_traversable_path( $path ) {
+
+	// Covert the path to an array.
+	if ( is_string( $path ) ) {
+		$path = explode( '.', $path );
+	} elseif ( ! is_array( $path ) ) {
+		$path = array();
+	}
+	return $path;
+}
+
+/**
  * Uses an array of keys to traverse an array to find a specific value
  *
  * @param array $array   The array to traverse.

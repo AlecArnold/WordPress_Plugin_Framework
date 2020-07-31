@@ -157,7 +157,7 @@ class Requirements {
 	 * @return string The multisite compatibility error message.
 	 */
 	public static function get_multisite_compatible_error_message() {
-		return __( self::MULTISITE_COMPATIBLE_ERROR_MESSAGE, Localisation::get_domain() );
+		return __( self::MULTISITE_COMPATIBLE_ERROR_MESSAGE, Localisation::get_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -197,7 +197,7 @@ class Requirements {
 	 * @return string The minimum WordPress version error message.
 	 */
 	public static function get_minimum_php_version_error_message() {
-		return __( sprintf( self::MINIMUM_PHP_VERSION_ERROR_MESSAGE, self::get_minimum_php_version() ), Localisation::get_domain() );
+		return __( sprintf( self::MINIMUM_PHP_VERSION_ERROR_MESSAGE, self::get_minimum_php_version() ), Localisation::get_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -237,7 +237,7 @@ class Requirements {
 	 * @return string The minimum PHP version error message.
 	 */
 	public static function get_minimum_wp_version_error_message() {
-		return __( sprintf( self::MINIMUM_WP_VERSION_ERROR_MESSAGE, self::get_minimum_wp_version() ), Localisation::get_domain() );
+		return __( sprintf( self::MINIMUM_WP_VERSION_ERROR_MESSAGE, self::get_minimum_wp_version() ), Localisation::get_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -281,7 +281,7 @@ class Requirements {
 	 * @return string The required plugin error message.
 	 */
 	public static function get_required_plugin_error_message( $plugin_name ) {
-		return __( sprintf( self::REQUIRED_PLUGIN_ERROR_MESSAGE, $plugin_name ), Localisation::get_domain() );
+		return __( sprintf( self::REQUIRED_PLUGIN_ERROR_MESSAGE, $plugin_name ), Localisation::get_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -361,7 +361,7 @@ class Requirements {
 	 */
 	public static function wp_action_check_plugin_requirements() {
 		if ( ! self::are_requirements_met() ) {
-			wp_die( self::get_requirement_errors() );
+			wp_die( self::get_requirement_errors() ); // phpcs:ignore
 		}
 	}
 
