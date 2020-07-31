@@ -8,6 +8,7 @@
 namespace Plugin_Name\Core;
 
 use Plugin_Name;
+use function Plugin_Name\Functions\Array_Utils\array_build_traversable_path;
 use function Plugin_Name\Functions\Array_Utils\array_traverse;
 
 /**
@@ -65,7 +66,7 @@ class Config {
 	 * @return mixed The config value.
 	 */
 	public static function get_config( $dot_path ) {
-		$path = explode( '.', $dot_path );
+		$path = array_build_traversable_path( $dot_path );
 		$name = array_shift( $path );
 		return array_traverse( self::get_loaded_config( $name ), $path );
 	}
