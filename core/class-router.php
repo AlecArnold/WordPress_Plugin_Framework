@@ -7,8 +7,6 @@
 
 namespace Plugin_Name\Core;
 
-use WP;
-
 /**
  * Handles all of the routes within this plugin.
  */
@@ -24,8 +22,10 @@ class Router {
 	/**
 	 * Defines all of the existing routes for this plugin.
 	 */
-	public static function static_constructor() {
+	public static function route_request() {
 		self::add_routes( Config::get_config( 'routes' ) );
+		self::hook_plugin_route_filters();
+		self::hook_dispatching_plugin_routes();
 	}
 
 	/**
@@ -40,13 +40,35 @@ class Router {
 	}
 
 	/**
-	 * Adds a single route to this this plugin.
+	 * Adds a single route to this plugin.
 	 *
 	 * @param string      $route_id The ID for the new route.
 	 * @param array|Route $route    The route to add.
 	 */
 	public static function add_route( $route_id, $route ) {
-		self::$routes[ $route_id ] = is_a( $route, 'Route' ) ? $route : new Route( $route );
+		self::$routes[ $route_id ] = is_a( $route, Route::class ) ? $route : new Route( $route );
+	}
+
+	/**
+	 * Removes a single route to this plugin.
+	 *
+	 * @param string $route_id The ID of the route to remove.
+	 */
+	public static function remove_route( $route_id ) {
+		if ( self::has_route( $route_id ) ) {
+			unset( self::$routes[ $route_id ] );
+		}
+	}
+
+	/**
+	 * Checks if a route has been set.
+	 *
+	 * @param string $route_id The ID of the route to check for.
+	 *
+	 * @return bool Whether a route with the provided ID is set.
+	 */
+	public static function has_route( $route_id ) {
+		return self::$routes[ $route_id ];
 	}
 
 	/**
@@ -57,101 +79,22 @@ class Router {
 	 * @return array An array containing all of the matching routes.
 	 */
 	public static function get_routes( $options = array() ) {
-		$routes = self::$routes;
+		return apply_filters( 'plugin_name_filter_routes', self::$routes, array_merge( self::get_default_route_options(), $options ) );
+	}
 
-		// Filter by method.
-		if ( isset( $options['method'] ) ) {
-			$routes = array_filter(
-				$routes,
-				/**
-				 * Determines whether a route should be filtered or not.
-				 *
-				 * @param Route $route The route to filter.
-				 *
-				 * @return bool Whether the route should be filtered out or not.
-				 */
-				function ( $route ) use ( $options ) {
-					return in_array( $options['method'], $route->get_method(), true );
-				}
-			);
-		}
-
-		// Filter by whether the route has a URL path.
-		if ( isset( $options['has_url_path'] ) ) {
-			$routes = array_filter(
-				$routes,
-				/**
-				 * Determines whether a route should be filtered or not.
-				 *
-				 * @param Route $route The route to filter.
-				 *
-				 * @return bool Whether the route should be filtered out or not.
-				 */
-				function ( $route ) use ( $options ) {
-					return $options['has_url_path'] === $route->has_url_path_regex();
-				}
-			);
-		}
-
-		// Filter by URL path.
-		if ( isset( $options['url_path'] ) ) {
-			$routes = array_filter(
-				$routes,
-				/**
-				 * Determines whether a route should be filtered or not.
-				 *
-				 * @param Route $route The route to filter.
-				 *
-				 * @return bool Whether the route should be filtered out or not.
-				 */
-				function ( $route ) use ( $options ) {
-					return $route->has_url_path_regex() && $route->is_url_path_match( $options['url_path'] );
-				}
-			);
-		}
-
-		// Filter by middleware.
-		if ( isset( $options['validate_middleware'] ) && $options['validate_middleware'] ) {
-			$routes = array_filter(
-				$routes,
-				/**
-				 * Determines whether a route should be filtered or not.
-				 *
-				 * @param Route $route The route to filter.
-				 *
-				 * @return bool Whether the route should be filtered out or not.
-				 */
-				function ( $route ) {
-					return ! $route->has_middleware() || ( $route->has_middleware() && $route->check_middleware() );
-				}
-			);
-		}
-
-		// Order the routes.
-		if ( isset( $options['order'] ) ) {
-			$order_by = isset( $options['order_by'] ) ? $options['order_by'] : 'DESC';
-
-			// Order by URL path score.
-			if ( 'url_path_score' === $options['order'] && isset( $options['url_path'] ) ) {
-				usort(
-					$routes,
-					/**
-					 * Determines whether a route should be filtered or not.
-					 *
-					 * @param Route $route_1 The route to compare URL path scores with.
-					 * @param Route $route_2 The route to compare URL path scores with.
-					 *
-					 * @return bool Whether the route should be filtered out or not.
-					 */
-					function ( $route_1, $route_2 ) use ( $order_by, $options ) {
-						return 'DESC' === $order_by ?
-							$route_1->get_url_path_score( $options['url_path'] ) < $route_2->get_url_path_score( $options['url_path'] ) :
-							$route_1->get_url_path_score( $options['url_path'] ) > $route_2->get_url_path_score( $options['url_path'] );
-					}
-				);
-			}
-		}
-		return $routes;
+	/**
+	 * Retrieves the default route options.
+	 *
+	 * @return array The default route options.
+	 */
+	public static function get_default_route_options() {
+		return array(
+			'url_path'            => '',
+			'method'              => 'any',
+			'validate_middleware' => false,
+			'order_by'            => 'DESC',
+			'order'               => '',
+		);
 	}
 
 	/**
@@ -179,53 +122,156 @@ class Router {
 	}
 
 	/**
+	 * Hooks the filters used to refine the `get_routes` method.
+	 */
+	public static function hook_plugin_route_filters() {
+
+		// Filtering routes.
+		add_filter( 'plugin_name_filter_routes', array( self::class, 'filter_routes_by_method' ), 10, 2 );
+		add_filter( 'plugin_name_filter_routes', array( self::class, 'filter_routes_by_url_path' ), 20, 2 );
+		add_filter( 'plugin_name_filter_routes', array( self::class, 'filter_routes_by_middleware' ), 30, 2 );
+
+		// Ordering routes.
+		add_filter( 'plugin_name_filter_routes', array( self::class, 'order_routes_by_priority' ), 40, 2 );
+
+	}
+
+	/**
 	 * Hooks the events used to dispatch the routes.
 	 */
-	public static function hook_plugin_routes() {
-		add_action( 'parse_request', array( self::class, 'wp_action_route_page' ) );
-		add_action( 'parse_request', array( self::class, 'wp_action_route_session' ) );
+	public static function hook_dispatching_plugin_routes() {
+		add_action( 'plugins_loaded', array( self::class, 'wp_action_route_request' ) );
 	}
 
 	/**
-	 * Sets the best making route as the current page.
-	 *
-	 * @param WP $wp Current WordPress environment instance.
+	 * Triggers all of the routes that match the current request.
 	 */
-	public static function wp_action_route_page( $wp ) {
-		$page_route = self::get_route(
-			array(
-				'method'              => Request::get_method(),
-				'url_path'            => Request::get_url_path(),
-				'validate_middleware' => true,
-				'order'               => 'url_path_score',
-			)
-		);
+	public static function wp_action_route_request() {
 
-		// Handle a matched URL path route.
-		if ( $page_route ) {
-			$wp->query_vars    = $page_route->get_query_vars_for_url_path( Request::get_url_path() );
-			$wp->matched_rule  = $page_route->get_url_path_regex();
-			$wp->matched_query = $page_route->get_url_path_rewrite( Request::get_url_path() );
-			$page_route->dispatch( Request::get_url_path() );
-		}
-	}
-
-	/**
-	 * Triggers all of the matching routes that are for pages.
-	 */
-	public static function wp_action_route_session() {
-		$session_routes = self::get_routes(
+		// Get the routes matching the current request.
+		$request_routes = self::get_routes(
 			array(
-				'has_url_path'        => false,
 				'method'              => Request::get_method(),
 				'validate_middleware' => true,
 			)
 		);
 
 		// Run each method specific route.
-		foreach ( $session_routes as $session_route ) {
-			$session_route->dispatch();
+		foreach ( $request_routes as $request_route ) {
+			$request_route->dispatch();
 		}
+
+	}
+
+	/**
+	 * Filters routes by method.
+	 *
+	 * @param array $routes  The routes to filter.
+	 * @param array $options The options for filtering the routes.
+	 *
+	 * @return array The routes that passed the filter.
+	 */
+	public static function filter_routes_by_method( $routes, $options ) {
+		if ( 0 !== strcasecmp( 'any', $options['method'] ) || $options['method'] ) {
+			$routes = array_filter(
+				$routes,
+				/**
+				 * Determines whether a route should be filtered or not.
+				 *
+				 * @param Route $route The route to filter.
+				 *
+				 * @return bool Whether the route should be filtered out or not.
+				 */
+				function ( $route ) use ( $options ) {
+					return in_array( $options['method'], $route->get_method(), true );
+				}
+			);
+		}
+		return $routes;
+	}
+
+	/**
+	 * Filters routes by URL path.
+	 *
+	 * @param array $routes  The routes to filter.
+	 * @param array $options The options for filtering the routes.
+	 *
+	 * @return array The routes that passed the filter.
+	 */
+	public static function filter_routes_by_url_path( $routes, $options ) {
+		if ( $options['url_path'] ) {
+			$routes = array_filter(
+				$routes,
+				/**
+				 * Determines whether a route should be filtered or not.
+				 *
+				 * @param Route $route The route to filter.
+				 *
+				 * @return bool Whether the route should be filtered out or not.
+				 */
+				function ( $route ) use ( $options ) {
+					return $route->has_url_path_regex() && $route->is_url_path_match( $options['url_path'] );
+				}
+			);
+		}
+		return $routes;
+	}
+
+	/**
+	 * Filters routes by middleware.
+	 *
+	 * @param array $routes  The routes to filter.
+	 * @param array $options The options for filtering the routes.
+	 *
+	 * @return array The routes that passed the filter.
+	 */
+	public static function filter_routes_by_middleware( $routes, $options ) {
+		if ( $options['validate_middleware'] ) {
+			$routes = array_filter(
+				$routes,
+				/**
+				 * Determines whether a route should be filtered or not.
+				 *
+				 * @param Route $route The route to filter.
+				 *
+				 * @return bool Whether the route should be filtered out or not.
+				 */
+				function ( $route ) {
+					return ! $route->has_middleware() || ( $route->has_middleware() && $route->check_middleware() );
+				}
+			);
+		}
+		return $routes;
+	}
+
+	/**
+	 * Reorders the provided routes by dispatch priority.
+	 *
+	 * @param array $routes  The routes to reorder.
+	 * @param array $options The options for filtering and reordering the routes.
+	 *
+	 * @return array The reordered routes.
+	 */
+	public static function order_routes_by_priority( $routes, $options ) {
+		if ( 'priority' === $options['order'] ) {
+			usort(
+				$routes,
+				/**
+				 * Reorders the routes by their inclusion priority.
+				 *
+				 * @param Route $route_1 The first route to compare priority with.
+				 * @param Route $route_2 The second route to compare priority with.
+				 *
+				 * @return bool Whether the route should be reordered.
+				 */
+				function ( $route_1, $route_2 ) use ( $options ) {
+					return 'DESC' === $options['order_by'] ?
+						$route_1->get_priority() < $route_2->get_priority() :
+						$route_1->get_priority() > $route_2->get_priority();
+				}
+			);
+		}
+		return $routes;
 	}
 
 }

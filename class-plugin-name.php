@@ -118,13 +118,13 @@ if ( ! class_exists( 'Plugin_Name' ) ) {
 			Functions::load_plugin_functions();
 
 			// Localise the wording used within this plugin.
-			Requirements::hook_plugin_requirements_check();
+			Requirements::enforce_plugin_requirements();
 
 			// Localise the wording used within this plugin.
-			Localisation::hook_plugin_localisation();
+			Localisation::localise_plugin();
 
 			// Run the routes that match the current session.
-			Router::hook_plugin_routes();
+			Router::route_request();
 
 		}
 

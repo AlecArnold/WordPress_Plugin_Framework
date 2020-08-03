@@ -92,7 +92,7 @@ function array_traverse( $array, $path, $default = null ) {
 	foreach ( $path as $item ) {
 
 		// Check that the provided argument exists within the array structure.
-		if ( isset( $array[ $item ] ) ) {
+		if ( is_array( $array ) && isset( $array[ $item ] ) ) {
 			$array = $array[ $item ];
 		} else {
 			$array = $default;

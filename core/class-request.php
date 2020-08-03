@@ -16,18 +16,18 @@ use function Plugin_Name\Functions\Array_Utils\array_traverse;
 class Request {
 
 	/**
-	 * Stores whether the input variables have been set.
-	 *
-	 * @var bool Whether the input variables have been set.
-	 */
-	protected static $is_input_variables_set = false;
-
-	/**
 	 * Stores an array containing both $_GET and $_POST combined.
 	 *
 	 * @var array An array containing both $_GET and $_POST combined.
 	 */
 	protected static $input_variables;
+
+	/**
+	 * Stores whether the input variables have been set.
+	 *
+	 * @var bool Whether the input variables have been set.
+	 */
+	protected static $are_input_variables_set = false;
 
 	/**
 	 * Retrieves the current request method for the users session.
@@ -57,13 +57,55 @@ class Request {
 	}
 
 	/**
+	 * Retrieves all of the global variables within the request.
+	 *
+	 * @return array All of the global variables with the request.
+	 */
+	public static function get_global_variables() {
+		return $GLOBALS;
+	}
+
+	/**
+	 * Determines whether a global variable has been provided in this request.
+	 *
+	 * @param string $dot_path The dot path to the data that is being checked for.
+	 *
+	 * @return bool Whether a global variable has been provided in this request.
+	 */
+	public static function has_global_variable( $dot_path ) {
+		return ! empty( self::get_global_variable( $dot_path ) );
+	}
+
+	/**
+	 * Retrieves a variable set within the $GLOBALS request.
+	 *
+	 * @param string $dot_path The dot path to the desired data.
+	 * @param mixed  $default  The default value to return when there isn't a value set on this request.
+	 *
+	 * @return array|mixed The targeted variables value or the default value.
+	 */
+	public static function get_global_variable( $dot_path, $default = null ) {
+		return array_traverse( self::get_global_variables(), array_build_traversable_path( $dot_path ), $default );
+	}
+
+	/**
+	 * Sets the input variables stored within this request.
+	 *
+	 * @param string $input_variables The input variables stored within this request.
+	 */
+	public static function set_input_variables( $input_variables ) {
+		self::$input_variables         = $input_variables;
+		self::$are_input_variables_set = true;
+	}
+
+	/**
 	 * Retrieves all of the input variables.
 	 *
 	 * @return array An array containing both $_GET and $_POST combined.
 	 */
 	public static function get_input_variables() {
-		if ( ! self::$is_input_variables_set ) {
-			self::$input_variables = array_merge( $_GET, $_POST ); // phpcs:ignore
+		if ( ! self::$are_input_variables_set ) {
+			self::set_input_variables( array_merge( $_GET, $_POST ) ); // phpcs:ignore
 		}
 		return self::$input_variables;
 	}
@@ -75,7 +117,7 @@ class Request {
 	 *
 	 * @return bool Whether an input variable has been provided in this request.
 	 */
-	public static function has_input_variable( $dot_path = null ) {
+	public static function has_input_variable( $dot_path ) {
 		return ! empty( self::get_input_variable( $dot_path ) );
 	}
 
@@ -91,16 +133,6 @@ class Request {
 		return array_traverse( self::get_input_variables(), array_build_traversable_path( $dot_path ), $default );
 	}
 
-
-	/**
-	 * Retrieves all of the files within the request.
-	 *
-	 * @return array All of the files with the request.
-	 */
-	public static function get_files() {
-		return $_FILES; // phpcs:ignore
-	}
-
 	/**
 	 * Determines whether a file has been provided in this request.
 	 *
@@ -113,6 +145,15 @@ class Request {
 	}
 
 	/**
+	 * Retrieves all of the files within the request.
+	 *
+	 * @return array All of the files with the request.
+	 */
+	public static function get_files() {
+		return $_FILES; // phpcs:ignore
+	}
+
+	/**
 	 * Retrieves an individual file set within the request.
 	 *
 	 * @param string $file_reference The reference for the file that is to be retrieved.
@@ -120,8 +161,7 @@ class Request {
 	 * @return array An individual file set within the request.
 	 */
 	public static function get_file( $file_reference ) {
-		$files = self::get_files();
-		return isset( $files[ $file_reference ] ) ? $files[ $file_reference ] : array(); // phpcs:ignore
+		return array_traverse( self::get_files(), array_build_traversable_path( $file_reference ), array() );
 	}
 
 }

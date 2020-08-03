@@ -8,15 +8,21 @@
 namespace Plugin_Name\Core;
 
 use Plugin_Name\Library\Callable_Reference_Reflector;
-use function Plugin_Name\Functions\Array_Utils\array_cast;
-use function Plugin_Name\Functions\Array_Utils\array_column_keep_keys;
-use function Plugin_Name\Functions\Array_Utils\array_replace_matches;
+use function Plugin_Name\Functions\Array_Utils\array_build_traversable_path;
+use function Plugin_Name\Functions\Array_Utils\array_traverse;
 use function Plugin_Name\Functions\Array_Utils\array_validate_items;
 
 /**
  * Handles individual routes within this plugin.
  */
 class Route {
+
+	/**
+	 * Stores an array of all the options for this route.
+	 *
+	 * @var array An array of all the options for this route.
+	 */
+	protected $route_options = array();
 
 	/**
 	 * Stores the route URL path regular expression.
@@ -26,6 +32,13 @@ class Route {
 	protected $url_path_regex;
 
 	/**
+	 * Stores whether the URL path regex has been set.
+	 *
+	 * @var bool Whether the URL path regex has been set.
+	 */
+	protected $is_url_path_regex_prepared = false;
+
+	/**
 	 * Stores the route method/s.
 	 *
 	 * @var array|string The route method/s.
@@ -33,51 +46,51 @@ class Route {
 	protected $method = 'any';
 
 	/**
-	 * Stores whether the route method value has been prepared.
+	 * Stores whether the route method value has been set.
 	 *
-	 * @var bool Whether the route method has been prepared.
+	 * @var bool Whether the route method has been set.
 	 */
 	protected $is_method_prepared = false;
 
 	/**
 	 * Stores the route middleware.
 	 *
-	 * @var string|array|Callable_Reference_Reflector The route middleware.
+	 * @var array|string|Callable_Reference_Reflector The route middleware.
 	 */
 	protected $middleware;
 
 	/**
-	 * Stores whether the route middleware value has been prepared.
+	 * Stores whether the route middleware value has been set.
 	 *
-	 * @var bool Whether the route middleware has been prepared.
+	 * @var bool Whether the route middleware has been set.
 	 */
 	protected $is_middleware_prepared = false;
 
 	/**
-	 * Stores the route query vars.
+	 * Stores the priority for this route to be dispatched.
 	 *
-	 * @var array The route query vars.
+	 * @var int The priority for this route to be dispatched.
 	 */
-	protected $query_vars = array();
+	protected $priority = 10;
 
 	/**
-	 * Stores whether the route query_vars value have been prepared.
+	 * Stores whether the route priority has been set.
 	 *
-	 * @var bool Whether the route query_vars has been prepared.
+	 * @var bool Whether the route priority has been set.
 	 */
-	protected $are_query_vars_prepared = false;
+	protected $is_priority_set = false;
 
 	/**
 	 * Stores the route callback.
 	 *
-	 * @var string|array|Callable_Reference_Reflector The route callback.
+	 * @var array|string|Callable_Reference_Reflector The route callback.
 	 */
 	protected $callback;
 
 	/**
-	 * Stores whether the route callback reflector has been prepared.
+	 * Stores whether the route callback reflector has been set.
 	 *
-	 * @var bool Whether the route callback reflector has been prepared.
+	 * @var bool Whether the route callback reflector has been set.
 	 */
 	protected $is_callback_prepared = false;
 
@@ -95,33 +108,29 @@ class Route {
 	 *
 	 * @param array $route_options An array of options for the route.
 	 */
-	public function set_route_options( $route_options ) {
+	protected function set_route_options( $route_options ) {
+		$this->route_options = $route_options;
+	}
 
-		// Sets the route URL path regular expression when required.
-		if ( isset( $route_options['regex'] ) ) {
-			$this->set_url_path_regex( $route_options['regex'] );
-		}
+	/**
+	 * Retrieves an array of all the options for this route.
+	 *
+	 * @return array An array of all the options for this route.
+	 */
+	public function get_route_options() {
+		return $this->route_options;
+	}
 
-		// Sets the route method when required.
-		if ( isset( $route_options['method'] ) ) {
-			$this->set_method( $route_options['method'] );
-		}
-
-		// Sets the route middleware when required.
-		if ( isset( $route_options['middleware'] ) ) {
-			$this->set_middleware( $route_options['middleware'] );
-		}
-
-		// Sets the route query vars when required.
-		if ( isset( $route_options['query_vars'] ) ) {
-			$this->set_query_vars( $route_options['query_vars'] );
-		}
-
-		// Sets the route callback when required.
-		if ( isset( $route_options['callback'] ) ) {
-			$this->set_callback( $route_options['callback'] );
-		}
-
+	/**
+	 * Retrieves an individual option for this route.
+	 *
+	 * @param string $dot_path The dot path to the desired route option.
+	 * @param mixed  $default  The default value to return when there isn't a value set on this route.
+	 *
+	 * @return mixed The value of a specific option for this route.
+	 */
+	public function get_route_option( $dot_path, $default = null ) {
+		return array_traverse( $this->get_route_options(), array_build_traversable_path( $dot_path ), $default );
 	}
 
 	/** =====================================================================
@@ -131,10 +140,23 @@ class Route {
 	/**
 	 * Sets the route URL path regular expression.
 	 *
-	 * @param string $url_path_regex The route URL path regular expression.
+	 * @param string $url_path_regex    The route URL path regular expression.
+	 * @param bool   $is_prepared Whether the provided URL path regular expression has been prepared.
 	 */
-	public function set_url_path_regex( $url_path_regex ) {
-		$this->url_path_regex = '{' . $url_path_regex . '}';
+	public function set_url_path_regex( $url_path_regex, $is_prepared = false ) {
+		$this->url_path_regex             = $url_path_regex;
+		$this->is_url_path_regex_prepared = $is_prepared;
+	}
+
+	/**
+	 * Prepares the route URL path regular expression.
+	 *
+	 * @param string $url_path_regex The route URL path regular expression that needs to be prepared.
+	 *
+	 * @return string The prepared route URL path regular expression.
+	 */
+	public function prepare_url_path_regex( $url_path_regex ) {
+		return '{' . $url_path_regex . '}';
 	}
 
 	/**
@@ -143,7 +165,7 @@ class Route {
 	 * @return bool Whether this route has a URL path regular expression.
 	 */
 	public function has_url_path_regex() {
-		return ! empty( $this->url_path_regex );
+		return ! empty( $this->get_url_path_regex() );
 	}
 
 	/**
@@ -152,6 +174,10 @@ class Route {
 	 * @return string The route URL path regular expression.
 	 */
 	public function get_url_path_regex() {
+		if ( ! $this->is_url_path_regex_prepared ) {
+			$prepared_url_path_regex = $this->prepare_url_path_regex( $this->get_route_option( 'regex' ) );
+			$this->set_url_path_regex( $prepared_url_path_regex, true );
+		}
 		return $this->url_path_regex;
 	}
 
@@ -162,19 +188,23 @@ class Route {
 	/**
 	 * Sets the route method/s.
 	 *
-	 * @param array|string $method The route method/s.
+	 * @param array|string $method      The route method/s.
+	 * @param bool         $is_prepared Whether the provided method has been prepared.
 	 */
-	public function set_method( $method ) {
+	public function set_method( $method, $is_prepared = false ) {
 		$this->method             = $method;
-		$this->is_method_prepared = false;
+		$this->is_method_prepared = $is_prepared;
 	}
 
 	/**
 	 * Prepares the route method/s.
+	 *
+	 * @param array|string $method The method/s that needs to be prepared.
+	 *
+	 * @return array The prepared method/s.
 	 */
-	public function prepare_method() {
-		$this->method             = array_map( 'strtoupper', (array) $this->method );
-		$this->is_method_prepared = true;
+	public function prepare_method( $method ) {
+		return array_map( 'strtoupper', (array) $method );
 	}
 
 	/**
@@ -193,7 +223,8 @@ class Route {
 	 */
 	public function get_method() {
 		if ( ! $this->is_method_prepared ) {
-			$this->prepare_method();
+			$prepared_method = $this->prepare_method( $this->get_route_option( 'method' ) );
+			$this->set_method( $prepared_method, true );
 		}
 		return $this->method;
 	}
@@ -205,31 +236,35 @@ class Route {
 	/**
 	 * Sets the route middleware.
 	 *
-	 * @param string|array $middleware The route middleware.
+	 * @param array|string $middleware  The route middleware.
+	 * @param bool         $is_prepared Whether the provided middleware has been prepared.
 	 */
-	public function set_middleware( $middleware ) {
+	public function set_middleware( $middleware, $is_prepared = false ) {
 		$this->middleware             = $middleware;
-		$this->is_middleware_prepared = false;
+		$this->is_middleware_prepared = $is_prepared;
 	}
 
 	/**
-	 * Converts the provided middleware to be wrapped within a `Callable_Reference_Reflector` object.
+	 * Prepares the route middleware.
+	 *
+	 * @param array $middleware The middleware that needs to be prepared.
+	 *
+	 * @return array The prepared middleware.
 	 */
-	public function prepare_middleware() {
-		$this->middleware = array_map(
+	public function prepare_middleware( $middleware ) {
+		return array_map(
 			/**
 			 * Wraps the middleware within a `Callable_Reference_Reflector` object.
 			 *
-			 * @param string|array $middleware The middleware to prepare.
+			 * @param array|string $middleware The middleware to prepare.
 			 *
 			 * @return Callable_Reference_Reflector The prepared middleware.
 			 */
 			function( $middleware ) {
 				return new Callable_Reference_Reflector( $middleware );
 			},
-			(array) $this->middleware
+			(array) $middleware
 		);
-		$this->is_middleware_prepared = true;
 	}
 
 	/**
@@ -248,7 +283,8 @@ class Route {
 	 */
 	public function get_middleware() {
 		if ( ! $this->is_middleware_prepared ) {
-			$this->prepare_middleware();
+			$prepared_middleware = $this->prepare_middleware( $this->get_route_option( 'middleware' ) );
+			$this->set_middleware( $prepared_middleware, true );
 		}
 		return $this->middleware;
 	}
@@ -276,96 +312,29 @@ class Route {
 	}
 
 	/** =====================================================================
-	 * Query Vars
+	 * Priority
 	 * ---------------------------------------------------------------------- */
 
 	/**
-	 * The variables to set as WordPress's query_vars when the route is matched.
+	 * Sets the route dispatch priority.
 	 *
-	 * @param array $query_vars The route query vars.
+	 * @param int $priority The route dispatch priority.
 	 */
-	public function set_query_vars( $query_vars ) {
-		$this->query_vars              = $query_vars;
-		$this->are_query_vars_prepared = false;
+	public function set_priority( $priority ) {
+		$this->priority        = $priority;
+		$this->is_priority_set = true;
 	}
 
 	/**
-	 * Prepare the query vars to include all required parameters.
-	 */
-	public function prepare_query_vars() {
-		$this->query_vars = array_map(
-			/**
-			 * Prepares query var array items.
-			 *
-			 * @param array $query_var The query var to prepare.
-			 *
-			 * @return array The prepared version of teh query var array.
-			 */
-			function( $query_var ) {
-				$query_var               = array_merge( $this->get_default_query_var_options(), array_cast( $query_var, 'value' ) );
-				$query_var['middleware'] = new Callable_Reference_Reflector( $query_var['middleware'] );
-				return $query_var;
-			},
-			$this->query_vars
-		);
-		$this->are_query_vars_prepared = true;
-	}
-
-	/**
-	 * Determines whether this route has query vars.
+	 * Retrieves the priority for this route to be dispatched.
 	 *
-	 * @return bool Whether the route has query vars.
+	 * @return int The priority for this route to be dispatched.
 	 */
-	public function has_query_vars() {
-		return ! empty( $this->get_query_vars() );
-	}
-
-	/**
-	 * Retrieves all of the query vars for this route.
-	 *
-	 * @return array An array containing all of the query vars.
-	 */
-	public function get_query_vars() {
-		if ( ! $this->are_query_vars_prepared ) {
-			$this->prepare_query_vars();
+	public function get_priority() {
+		if ( ! $this->is_priority_set ) {
+			$this->set_priority( $this->get_route_option( 'priority', 10 ) );
 		}
-		return $this->query_vars;
-	}
-
-	/**
-	 * Retrieves the default query var options.
-	 *
-	 * @return array An array containing all of the default query var options.
-	 */
-	public function get_default_query_var_options() {
-		return array(
-			'value'      => null,
-			'middleware' => null,
-		);
-	}
-
-	/**
-	 * Determines whether the query var middleware is all valid.
-	 *
-	 * @param string $url_path The URL path to use when checking the query var middleware.
-	 *
-	 * @return bool Whether the query var middleware is all valid.
-	 */
-	public function check_query_vars_middleware( $url_path ) {
-		return array_validate_items(
-			/**
-			 * Check the middleware for a query var.
-			 *
-			 * @param array $query_var The query var to check.
-			 *
-			 * @return bool Whether the query var middleware is valid.
-			 */
-			function( $query_var ) {
-				$callable = $query_var['middleware']->get_callable();
-				return ! $query_var['middleware']->has_callable_reference() || ( is_callable( $callable ) && call_user_func_array( $callable, array( $query_var['value'], $this ) ) );
-			},
-			$this->populate_query_vars_values_using_url_path( $url_path )
-		);
+		return $this->priority;
 	}
 
 	/** =====================================================================
@@ -375,19 +344,23 @@ class Route {
 	/**
 	 * Sets the callback for when this route is matched.
 	 *
-	 * @param string|array $callback The route callback.
+	 * @param array|string $callback    The route callback.
+	 * @param bool         $is_prepared Whether the provided callback has been prepared.
 	 */
-	public function set_callback( $callback ) {
+	public function set_callback( $callback, $is_prepared = false ) {
 		$this->callback             = $callback;
-		$this->is_callback_prepared = false;
+		$this->is_callback_prepared = $is_prepared;
 	}
 
 	/**
 	 * Prepare the callback by wrapping it within a `Callable_Reference_Reflector` object.
+	 *
+	 * @param array|string $callback The callback that needs to be prepared.
+	 *
+	 * @return Callable_Reference_Reflector The prepared callback.
 	 */
-	public function prepare_callback() {
-		$this->callback             = new Callable_Reference_Reflector( $this->get_callback() );
-		$this->is_callback_prepared = true;
+	public function prepare_callback( $callback ) {
+		return new Callable_Reference_Reflector( $callback );
 	}
 
 	/**
@@ -406,7 +379,8 @@ class Route {
 	 */
 	public function get_callback() {
 		if ( ! $this->is_callback_prepared ) {
-			$this->prepare_callback();
+			$prepared_callback = $this->prepare_callback( $this->get_route_option( 'callback' ) );
+			$this->set_callback( $prepared_callback );
 		}
 		return $this->callback;
 	}
@@ -416,72 +390,12 @@ class Route {
 	 * ---------------------------------------------------------------------- */
 
 	/**
-	 * Builds the WordPress rewrite for this route.
-	 *
-	 * @param string $url_path The URL path used to derive values from for the rewrite.
-	 *
-	 * @return string The rewrite for this route/URL path.
-	 */
-	public function get_url_path_rewrite( $url_path ) {
-		return 'index.php?' . http_build_query( $this->get_query_vars_for_url_path( $url_path ) );
-	}
-
-	/**
-	 * Retrieves a populated version of the query vars using a URL path to populate it.
-	 *
-	 * @param string $url_path The URL path used to derive values from for the query vars.
-	 *
-	 * @return array An array containing all of the query vars populated with values from the provided URL path.
-	 */
-	public function populate_query_vars_values_using_url_path( $url_path ) {
-		return array_replace_matches( $this->get_query_vars(), $this->get_url_path_regex(), $url_path );
-	}
-
-	/**
-	 * Retrieve all of the query var values for a given URL path.
-	 *
-	 * @param string $url_path The URL path used to retrieve values from.
-	 *
-	 * @return array An array of all the query var values.
-	 */
-	public function get_query_vars_for_url_path( $url_path ) {
-		return array_filter( array_column_keep_keys( $this->populate_query_vars_values_using_url_path( $url_path ), 'value' ) );
-	}
-
-	/**
-	 * Check whether a provided URL path matches the URL path regular expression for this route.
-	 *
-	 * @param string $url_path The URL path used to compare with this route.
-	 *
-	 * @return bool Whether the provided URL path matches this route.
-	 */
-	public function is_url_path_match( $url_path ) {
-		return preg_match( $this->get_url_path_regex(), $url_path ) && $this->check_query_vars_middleware( $url_path );
-	}
-
-	/**
-	 * Determine the best fit score out of 100(where 100 is a perfect score) for the provided URL path. This is used as
-	 * a tie breaker for page routes that both a given URL.
-	 *
-	 * @param string $url_path The URL path to generate a score for.
-	 *
-	 * @return float The score for the given URL path.
-	 */
-	public function get_url_path_score( $url_path ) {
-		preg_match( $this->get_url_path_regex(), $url_path, $matches );
-		$total_matches = count( $matches );
-		return $total_matches > 0 ? ceil( 100 / $total_matches ) : 0;
-	}
-
-	/**
 	 * Dispatches the route callback.
-	 *
-	 * @param null|string $url_path The URL path to convert to arguments for the callback.
 	 *
 	 * @return mixed|null The callback response.
 	 */
-	public function dispatch( $url_path = null ) {
-		return $this->has_callback() ? call_user_func_array( $this->get_callback()->get_callable(), $this->get_query_vars_for_url_path( $url_path ) ) : null;
+	public function dispatch() {
+		return $this->has_callback() ? call_user_func_array( $this->get_callback()->get_callable(), array( $this ) ) : null;
 	}
 
 }

@@ -9,9 +9,11 @@ namespace Plugin_Name\Core;
 
 use Plugin_Name;
 use WP_Error;
+use function Plugin_Name\Functions\Array_Utils\array_build_traversable_path;
+use function Plugin_Name\Functions\Array_Utils\array_traverse;
 
 /**
- * Handles validating the PHP version, WP version, multisite and installed plugin requirements.
+ * Handles validating the PHP version, WordPress version, multisite and installed plugin requirements.
  */
 class Requirements {
 
@@ -23,32 +25,18 @@ class Requirements {
 	const WP_ERROR_CODE = 'plugin-name-requirement-error';
 
 	/**
-	 * Holds the error message for multisite compatibility.
+	 * Stores all of the plugin requirement options.
 	 *
-	 * @var string The multisite compatibility error message.
+	 * @var array An array containing all of the plugin requirement options.
 	 */
-	const MULTISITE_COMPATIBLE_ERROR_MESSAGE = 'This plugin is not compatible with multisite environment.';
+	protected static $requirements = array();
 
 	/**
-	 * Holds the PHP version error message.
+	 * Stores whether the plugin requirements have been set.
 	 *
-	 * @var string The PHP version error message.
+	 * @var bool Whether the plugin requirements have been set.
 	 */
-	const MINIMUM_PHP_VERSION_ERROR_MESSAGE = 'This plugin requires WordPress version %s+ to run.';
-
-	/**
-	 * Holds the WordPress version error message.
-	 *
-	 * @var string The WordPress version error message.
-	 */
-	const MINIMUM_WP_VERSION_ERROR_MESSAGE = 'This plugin requires WordPress version %s+ to run.';
-
-	/**
-	 * Holds the required plugin error message.
-	 *
-	 * @var string The required plugin error message.
-	 */
-	const REQUIRED_PLUGIN_ERROR_MESSAGE = 'This plugin requires "%s" to be installed and activated.';
+	protected static $are_requirements_set = false;
 
 	/**
 	 * Stores the option for whether the site is multisite compatible. Default `true`.
@@ -58,11 +46,39 @@ class Requirements {
 	protected static $is_multisite_compatible = true;
 
 	/**
+	 * Stores whether the multisite compatibility have been set.
+	 *
+	 * @var bool Whether the multisite compatibility have been set.
+	 */
+	protected static $is_multisite_compatible_set = false;
+
+	/**
+	 * Holds the error message for multisite compatibility.
+	 *
+	 * @var string The multisite compatibility error message.
+	 */
+	protected static $multisite_compatible_error_message = 'This plugin is not compatible with multisite environment.';
+
+	/**
 	 * Stores the minimum PHP version required to run this plugin. Default `any`.
 	 *
 	 * @var string The minimum PHP version required to run this plugin.
 	 */
 	protected static $minimum_php_version = 'any';
+
+	/**
+	 * Stores whether the minimum PHP version has been set.
+	 *
+	 * @var bool Whether the minimum PHP version has been set.
+	 */
+	protected static $is_minimum_php_version_set = false;
+
+	/**
+	 * Holds the PHP version error message.
+	 *
+	 * @var string The PHP version error message.
+	 */
+	protected static $minimum_php_version_error_message = 'This plugin requires WordPress version %s+ to run.';
 
 	/**
 	 * Stores the minimum WordPress version required to run this plugin. Default `any`.
@@ -72,11 +88,39 @@ class Requirements {
 	protected static $minimum_wp_version = 'any';
 
 	/**
+	 * Stores whether the minimum WordPress version has been set.
+	 *
+	 * @var bool Whether the minimum WordPress version has been set.
+	 */
+	protected static $is_minimum_wp_version_set = false;
+
+	/**
+	 * Holds the WordPress version error message.
+	 *
+	 * @var string The WordPress version error message.
+	 */
+	protected static $minimum_wp_version_error_message = 'This plugin requires WordPress version %s+ to run.';
+
+	/**
 	 * Stores the plugins that are required to make this plugin function.
 	 *
 	 * @var array An array of plugins that are required to make this plugin function.
 	 */
 	protected static $required_plugins = array();
+
+	/**
+	 * Stores whether the required plugins have been set.
+	 *
+	 * @var bool Whether the required plugins have been set.
+	 */
+	protected static $are_required_plugins_set = false;
+
+	/**
+	 * Holds the required plugin error message.
+	 *
+	 * @var string The required plugin error message.
+	 */
+	protected static $required_plugin_error_message = 'This plugin requires "%s" to be installed and activated.';
 
 	/**
 	 * Stores the WP_Error object containing all of the errors encountered.
@@ -86,10 +130,17 @@ class Requirements {
 	protected static $requirement_errors;
 
 	/**
+	 * Stores whether the plugin errors have been set.
+	 *
+	 * @var bool Whether the plugin errors have been set.
+	 */
+	protected static $are_requirement_errors_set = false;
+
+	/**
 	 * Handles the static construction event for this class.
 	 */
-	public static function static_constructor() {
-		self::set_requirements( Config::get_config( 'requirements' ) );
+	public static function enforce_plugin_requirements() {
+		self::hook_plugin_requirements_check();
 	}
 
 	/**
@@ -98,26 +149,33 @@ class Requirements {
 	 * @param array $requirements The requirements for this plugin.
 	 */
 	protected static function set_requirements( $requirements ) {
+		self::$requirements               = $requirements;
+		self::$are_requirements_set       = true;
+		self::$are_requirement_errors_set = false;
+	}
 
-		// Sets whether this plugin is multisite compatible.
-		if ( isset( $requirements['is_multisite_compatible'] ) ) {
-			self::set_is_multisite_compatible( $requirements['is_multisite_compatible'] );
+	/**
+	 * Retrieves all of the plugin requirement options.
+	 *
+	 * @return array An array containing all of the plugin requirement options.
+	 */
+	public static function get_requirements() {
+		if ( ! self::$are_requirements_set ) {
+			self::set_requirements( Config::get_config( 'requirements' ) );
 		}
+		return self::$requirements;
+	}
 
-		// Sets the minimum PHP version required.
-		if ( isset( $requirements['minimum_php_version'] ) ) {
-			self::set_minimum_php_version( $requirements['minimum_php_version'] );
-		}
-
-		// Sets the minimum WordPress version required.
-		if ( isset( $requirements['minimum_wp_version'] ) ) {
-			self::set_minimum_wp_version( $requirements['minimum_wp_version'] );
-		}
-
-		// Sets all of the other plugins that need to be installed.
-		if ( isset( $requirements['required_plugins'] ) ) {
-			self::set_required_plugins( $requirements['required_plugins'] );
-		}
+	/**
+	 * Retrieves a single plugin requirement option.
+	 *
+	 * @param string $requirement_reference The reference for the requirement that is to be retrieved.
+	 * @param mixed  $default               The default value to return when the option isn't set.
+	 *
+	 * @return mixed A single plugin requirement option value.
+	 */
+	public static function get_requirement( $requirement_reference, $default = null ) {
+		return array_traverse( self::get_requirements(), array_build_traversable_path( $requirement_reference ), $default );
 	}
 
 	/** =====================================================================
@@ -130,7 +188,9 @@ class Requirements {
 	 * @param bool $is_multisite_compatible Whether this plugin is multisite compatible.
 	 */
 	public static function set_is_multisite_compatible( $is_multisite_compatible ) {
-		self::$is_multisite_compatible = $is_multisite_compatible;
+		self::$is_multisite_compatible     = $is_multisite_compatible;
+		self::$is_multisite_compatible_set = true;
+		self::$are_requirement_errors_set  = false;
 	}
 
 	/**
@@ -139,6 +199,9 @@ class Requirements {
 	 * @return bool Whether this plugin is multisite compatible.
 	 */
 	public static function get_is_multisite_compatible() {
+		if ( ! self::$is_multisite_compatible_set ) {
+			self::set_is_multisite_compatible( self::get_requirement( 'is_multisite_compatible' ) );
+		}
 		return self::$is_multisite_compatible;
 	}
 
@@ -152,12 +215,21 @@ class Requirements {
 	}
 
 	/**
+	 * Sets the multisite compatible error message.
+	 *
+	 * @param string $multisite_compatible_error_message The multisite compatible error message.
+	 */
+	public static function set_multisite_compatible_error_message( $multisite_compatible_error_message ) {
+		self::$multisite_compatible_error_message = $multisite_compatible_error_message;
+	}
+
+	/**
 	 * Generates the multisite compatibility error message.
 	 *
 	 * @return string The multisite compatibility error message.
 	 */
 	public static function get_multisite_compatible_error_message() {
-		return __( self::MULTISITE_COMPATIBLE_ERROR_MESSAGE, Localisation::get_domain() ); // phpcs:ignore
+		return __( self::$multisite_compatible_error_message, Localisation::get_text_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -170,7 +242,9 @@ class Requirements {
 	 * @param string $minimum_php_version The minimum PHP version required to run this plugin.
 	 */
 	public static function set_minimum_php_version( $minimum_php_version ) {
-		self::$minimum_php_version = $minimum_php_version;
+		self::$minimum_php_version        = $minimum_php_version;
+		self::$is_minimum_php_version_set = true;
+		self::$are_requirement_errors_set = false;
 	}
 
 	/**
@@ -179,6 +253,9 @@ class Requirements {
 	 * @return string The minimum PHP version required to run this plugin.
 	 */
 	public static function get_minimum_php_version() {
+		if ( ! self::$is_minimum_php_version_set ) {
+			self::set_minimum_php_version( self::get_requirement( 'minimum_php_version' ) );
+		}
 		return self::$minimum_php_version;
 	}
 
@@ -192,12 +269,21 @@ class Requirements {
 	}
 
 	/**
+	 * Sets the minimum PHP version error message. "%s" is replaced with the minimum required version.
+	 *
+	 * @param string $minimum_php_version_error_message The minimum PHP version error message.
+	 */
+	public static function set_minimum_php_version_error_message( $minimum_php_version_error_message ) {
+		self::$minimum_php_version_error_message = $minimum_php_version_error_message;
+	}
+
+	/**
 	 * Generates the minimum WordPress version error message.
 	 *
 	 * @return string The minimum WordPress version error message.
 	 */
 	public static function get_minimum_php_version_error_message() {
-		return __( sprintf( self::MINIMUM_PHP_VERSION_ERROR_MESSAGE, self::get_minimum_php_version() ), Localisation::get_domain() ); // phpcs:ignore
+		return __( sprintf( self::$minimum_php_version_error_message, self::get_minimum_php_version() ), Localisation::get_text_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -210,7 +296,9 @@ class Requirements {
 	 * @param string $minimum_wp_version The minimum WordPress version required to run this plugin.
 	 */
 	public static function set_minimum_wp_version( $minimum_wp_version ) {
-		self::$minimum_wp_version = $minimum_wp_version;
+		self::$minimum_wp_version         = $minimum_wp_version;
+		self::$is_minimum_wp_version_set  = true;
+		self::$are_requirement_errors_set = false;
 	}
 
 	/**
@@ -219,6 +307,9 @@ class Requirements {
 	 * @return string The minimum WordPress version required to run this plugin.
 	 */
 	public static function get_minimum_wp_version() {
+		if ( ! self::$is_minimum_wp_version_set ) {
+			self::set_minimum_wp_version( self::get_requirement( 'minimum_wp_version' ) );
+		}
 		return self::$minimum_wp_version;
 	}
 
@@ -228,7 +319,16 @@ class Requirements {
 	 * @return bool Whether the minimum WordPress version requirement has been met.
 	 */
 	public static function is_minimum_wp_version_requirement_met() {
-		return version_compare( $GLOBALS['wp_version'], self::get_minimum_wp_version(), '>=' );
+		return version_compare( Request::get_global_variable( 'wp_version' ), self::get_minimum_wp_version(), '>=' );
+	}
+
+	/**
+	 * Sets the minimum WordPress version error message. "%s" is replaced with the minimum required version.
+	 *
+	 * @param string $minimum_wp_version_error_message The minimum WordPress version error message.
+	 */
+	public static function set_minimum_wp_version_error_message( $minimum_wp_version_error_message ) {
+		self::$minimum_wp_version_error_message = $minimum_wp_version_error_message;
 	}
 
 	/**
@@ -237,7 +337,7 @@ class Requirements {
 	 * @return string The minimum PHP version error message.
 	 */
 	public static function get_minimum_wp_version_error_message() {
-		return __( sprintf( self::MINIMUM_WP_VERSION_ERROR_MESSAGE, self::get_minimum_wp_version() ), Localisation::get_domain() ); // phpcs:ignore
+		return __( sprintf( self::$minimum_wp_version_error_message, self::get_minimum_wp_version() ), Localisation::get_text_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -250,7 +350,9 @@ class Requirements {
 	 * @param array $required_plugins An array of plugins that are required to make this plugin function.
 	 */
 	public static function set_required_plugins( $required_plugins ) {
-		self::$required_plugins = $required_plugins;
+		self::$required_plugins           = $required_plugins;
+		self::$are_required_plugins_set   = true;
+		self::$are_requirement_errors_set = false;
 	}
 
 	/**
@@ -259,6 +361,9 @@ class Requirements {
 	 * @return array An array of plugins that are required to make this plugin function.
 	 */
 	public static function get_required_plugins() {
+		if ( ! self::$are_required_plugins_set ) {
+			self::set_required_plugins( self::get_requirement( 'required_plugins' ) );
+		}
 		return self::$required_plugins;
 	}
 
@@ -274,6 +379,15 @@ class Requirements {
 	}
 
 	/**
+	 * Sets the required plugin error message. "%s" is replaced with the plugin name.
+	 *
+	 * @param string $required_plugin_error_message The required plugin error message.
+	 */
+	public static function set_required_plugin_error_message( $required_plugin_error_message ) {
+		self::$required_plugin_error_message = $required_plugin_error_message;
+	}
+
+	/**
 	 * Generates an error for a required plugin.
 	 *
 	 * @param string $plugin_name The name of the plugin that the error message is for.
@@ -281,7 +395,7 @@ class Requirements {
 	 * @return string The required plugin error message.
 	 */
 	public static function get_required_plugin_error_message( $plugin_name ) {
-		return __( sprintf( self::REQUIRED_PLUGIN_ERROR_MESSAGE, $plugin_name ), Localisation::get_domain() ); // phpcs:ignore
+		return __( sprintf( self::$required_plugin_error_message, $plugin_name ), Localisation::get_text_domain() ); // phpcs:ignore
 	}
 
 	/** =====================================================================
@@ -289,24 +403,36 @@ class Requirements {
 	 * ---------------------------------------------------------------------- */
 
 	/**
-	 * Sets any errors caused by requirements not being met.
+	 * Sets the WP_Error object containing all of the errors encountered.
+	 *
+	 * @param WP_Error $requirement_errors The WP_Error object containing all of the errors encountered.
 	 */
-	public static function set_requirement_errors() {
-		self::$requirement_errors = new WP_Error();
+	public static function set_requirement_errors( $requirement_errors ) {
+		self::$requirement_errors         = $requirement_errors;
+		self::$are_requirement_errors_set = true;
+	}
+
+	/**
+	 * Derives the WP_Error object containing all of the errors encountered.
+	 *
+	 * @return WP_Error The WP_Error object containing all of the errors encountered.
+	 */
+	public static function derive_requirement_errors() {
+		$requirement_wp_error = new WP_Error();
 
 		// Adds an error when the multisite requirement has not been met.
 		if ( ! self::is_multisite_compatible_requirement_met() ) {
-			self::$requirement_errors->add( self::WP_ERROR_CODE, self::get_multisite_compatible_error_message() );
+			$requirement_wp_error->add( self::WP_ERROR_CODE, self::get_multisite_compatible_error_message() );
 		}
 
 		// Adds an error when the PHP version requirement has not been met.
 		if ( ! self::is_minimum_php_version_requirement_met() ) {
-			self::$requirement_errors->add( self::WP_ERROR_CODE, self::get_minimum_php_version_error_message() );
+			$requirement_wp_error->add( self::WP_ERROR_CODE, self::get_minimum_php_version_error_message() );
 		}
 
 		// Adds an error when the WordPress version requirement has not been met.
 		if ( ! self::is_minimum_wp_version_requirement_met() ) {
-			self::$requirement_errors->add( self::WP_ERROR_CODE, self::get_minimum_wp_version_error_message() );
+			$requirement_wp_error->add( self::WP_ERROR_CODE, self::get_minimum_wp_version_error_message() );
 		}
 
 		// Adds an error when the required plugins are not installed and activated.
@@ -314,18 +440,10 @@ class Requirements {
 
 			// Check whether an error needs to be added for the current plugin.
 			if ( ! self::is_plugin_active( $required_plugin_path ) ) {
-				self::$requirement_errors->add( self::WP_ERROR_CODE, self::get_multisite_compatible_error_message() );
+				$requirement_wp_error->add( self::WP_ERROR_CODE, self::get_required_plugin_error_message( $required_plugin_name ) );
 			}
 		}
-	}
-
-	/**
-	 * Determines whether the requirements have been checked.
-	 *
-	 * @return bool Whether the requirements have been checked.
-	 */
-	public static function have_requirements_been_checked() {
-		return ! empty( self::$requirement_errors );
+		return $requirement_wp_error;
 	}
 
 	/**
@@ -343,8 +461,8 @@ class Requirements {
 	 * @return WP_Error The WP_Error object containing all of the requirement errors.
 	 */
 	public static function get_requirement_errors() {
-		if ( ! self::have_requirements_been_checked() ) {
-			self::set_requirement_errors();
+		if ( ! self::$are_requirement_errors_set ) {
+			self::set_requirement_errors( self::derive_requirement_errors() );
 		}
 		return self::$requirement_errors;
 	}

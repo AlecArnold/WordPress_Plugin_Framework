@@ -22,6 +22,20 @@ class Template {
 	protected $template_file;
 
 	/**
+	 * Stores the path to the template path.
+	 *
+	 * @var string The path to the template path.
+	 */
+	protected $template_path;
+
+	/**
+	 * Stores whether the template path has been set.
+	 *
+	 * @var bool Whether the template path has been set.
+	 */
+	protected $is_template_path_set = false;
+
+	/**
 	 * Stores the variables that are included within the template.
 	 *
 	 * @var array The template variables.
@@ -36,7 +50,7 @@ class Template {
 	 */
 	public function __construct( $template_file, $variables = array() ) {
 		$this->set_template_file( $template_file );
-		$this->set_template_variables( $variables );
+		$this->add_template_variables( $variables );
 	}
 
 	/**
@@ -46,7 +60,7 @@ class Template {
 	 * @param string $value The variable value.
 	 */
 	public function __set( $key, $value ) {
-		$this->set_template_variable( $key, $value );
+		$this->add_template_variable( $key, $value );
 	}
 
 	/**
@@ -88,10 +102,23 @@ class Template {
 	/**
 	 * Retrieves the path to the template file.
 	 *
+	 * @param string $template_path The path to the template file.
+	 */
+	public function set_template_path( $template_path ) {
+		$this->template_path        = $template_path;
+		$this->is_template_path_set = true;
+	}
+
+	/**
+	 * Retrieves the path to the template file.
+	 *
 	 * @return string The path to the template file.
 	 */
 	public function get_template_path() {
-		return Plugin_Name::get_plugin_path( 'template/' . $this->get_template_file() );
+		if ( ! $this->is_template_path_set ) {
+			$this->set_template_path( Plugin_Name::get_plugin_path( 'template/' . $this->get_template_file() ) );
+		}
+		return $this->template_path;
 	}
 
 	/**
@@ -99,9 +126,9 @@ class Template {
 	 *
 	 * @param array $variables The variables to include within the template.
 	 */
-	public function set_template_variables( $variables ) {
+	public function add_template_variables( $variables ) {
 		foreach ( $variables as $key => $value ) {
-			$this->set_template_variable( $key, $value );
+			$this->add_template_variable( $key, $value );
 		}
 	}
 
@@ -111,7 +138,7 @@ class Template {
 	 * @param string $key   The name of the variables that will be accessible in the template.
 	 * @param mixed  $value The value of the variable.
 	 */
-	public function set_template_variable( $key, $value ) {
+	public function add_template_variable( $key, $value ) {
 		$this->template_variables[ $key ] = $value;
 	}
 
@@ -161,9 +188,14 @@ class Template {
 
 			// Renders the template.
 			include $this->get_template_path();
-			return true;
+
+			// Set the response to return that the template was rendered successfully.
+			$response = true;
+
+		} else { // Set the response to return that the template failed to render.
+			$response = false;
 		}
-		return false;
+		return $response;
 	}
 
 }

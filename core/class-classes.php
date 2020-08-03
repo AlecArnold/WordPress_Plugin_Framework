@@ -8,8 +8,6 @@
 namespace Plugin_Name\Core;
 
 use Plugin_Name;
-use ReflectionClass;
-use ReflectionException;
 
 /**
  * Includes all methods required for loading plugin classes.
@@ -24,7 +22,6 @@ class Classes {
 			function( $class_path ) {
 				if ( self::is_plugin_class( $class_path ) ) {
 					self::load_class_file( $class_path );
-					self::invoke_static_constructor( $class_path );
 				}
 			}
 		);
@@ -52,27 +49,6 @@ class Classes {
 		// Check that a file was found.
 		if ( $file_path ) {
 			require_once $file_path;
-		}
-	}
-
-	/**
-	 * Attempt to invoke a static constructor for the given class.
-	 *
-	 * @param string $class_path The class to attempt to invoke a static constructor for.
-	 */
-	protected static function invoke_static_constructor( $class_path ) {
-
-		// Handle any errors caused by the attempt to load the constructor.
-		try {
-			$reflection_class  = new ReflectionClass( $class_path );
-			$reflection_method = $reflection_class->getMethod( 'static_constructor' ); // Could use $reflection_class->getShortName() to copy c# and java.
-
-			// Check whether the method meets the requirements for a static constructor.
-			if ( $reflection_method->isStatic() && 0 === $reflection_method->getNumberOfParameters() && ! $reflection_method->isAbstract() ) {
-				$reflection_method->invoke( null );
-			}
-		} catch ( ReflectionException $exception ) {
-			return;
 		}
 	}
 
