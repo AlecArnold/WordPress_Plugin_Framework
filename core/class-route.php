@@ -67,20 +67,6 @@ class Route {
 	protected $is_middleware_prepared = false;
 
 	/**
-	 * Stores the priority for this route to be dispatched.
-	 *
-	 * @var int The priority for this route to be dispatched.
-	 */
-	protected $priority = 10;
-
-	/**
-	 * Stores whether the route priority has been set.
-	 *
-	 * @var bool Whether the route priority has been set.
-	 */
-	protected $is_priority_set = false;
-
-	/**
 	 * Stores the route callback.
 	 *
 	 * @var array|string|Callable_Reference_Reflector The route callback.
@@ -93,6 +79,20 @@ class Route {
 	 * @var bool Whether the route callback reflector has been set.
 	 */
 	protected $is_callback_prepared = false;
+
+	/**
+	 * Stores the priority for this route to be dispatched.
+	 *
+	 * @var int The priority for this route to be dispatched.
+	 */
+	protected $priority = 10;
+
+	/**
+	 * Stores whether the route priority has been set.
+	 *
+	 * @var bool Whether the route priority has been set.
+	 */
+	protected $is_priority_set = false;
 
 	/**
 	 * Handles the construction of the route object.
@@ -134,7 +134,7 @@ class Route {
 	}
 
 	/** =====================================================================
-	 * Regex
+	 * URL Path Regex
 	 * ---------------------------------------------------------------------- */
 
 	/**
@@ -175,10 +175,21 @@ class Route {
 	 */
 	public function get_url_path_regex() {
 		if ( ! $this->is_url_path_regex_prepared ) {
-			$prepared_url_path_regex = $this->prepare_url_path_regex( $this->get_route_option( 'regex' ) );
+			$prepared_url_path_regex = $this->prepare_url_path_regex( $this->get_route_option( 'url_path_regex' ) );
 			$this->set_url_path_regex( $prepared_url_path_regex, true );
 		}
 		return $this->url_path_regex;
+	}
+
+	/**
+	 * Check whether a provided URL path matches the URL path regular expression for this route.
+	 *
+	 * @param string $url_path The URL path used to compare with this route.
+	 *
+	 * @return bool Whether the provided URL path matches this route.
+	 */
+	public function is_url_path_match( $url_path ) {
+		return preg_match( $this->get_url_path_regex(), $url_path );
 	}
 
 	/** =====================================================================
@@ -312,32 +323,6 @@ class Route {
 	}
 
 	/** =====================================================================
-	 * Priority
-	 * ---------------------------------------------------------------------- */
-
-	/**
-	 * Sets the route dispatch priority.
-	 *
-	 * @param int $priority The route dispatch priority.
-	 */
-	public function set_priority( $priority ) {
-		$this->priority        = $priority;
-		$this->is_priority_set = true;
-	}
-
-	/**
-	 * Retrieves the priority for this route to be dispatched.
-	 *
-	 * @return int The priority for this route to be dispatched.
-	 */
-	public function get_priority() {
-		if ( ! $this->is_priority_set ) {
-			$this->set_priority( $this->get_route_option( 'priority', 10 ) );
-		}
-		return $this->priority;
-	}
-
-	/** =====================================================================
 	 * Callback
 	 * ---------------------------------------------------------------------- */
 
@@ -386,16 +371,42 @@ class Route {
 	}
 
 	/** =====================================================================
+	 * Priority
+	 * ---------------------------------------------------------------------- */
+
+	/**
+	 * Sets the route dispatch priority.
+	 *
+	 * @param int $priority The route dispatch priority.
+	 */
+	public function set_priority( $priority ) {
+		$this->priority        = $priority;
+		$this->is_priority_set = true;
+	}
+
+	/**
+	 * Retrieves the priority for this route to be dispatched.
+	 *
+	 * @return int The priority for this route to be dispatched.
+	 */
+	public function get_priority() {
+		if ( ! $this->is_priority_set ) {
+			$this->set_priority( $this->get_route_option( 'priority', 10 ) );
+		}
+		return $this->priority;
+	}
+
+	/** =====================================================================
 	 * Helpers
 	 * ---------------------------------------------------------------------- */
 
 	/**
 	 * Dispatches the route callback.
 	 *
-	 * @return mixed|null The callback response.
+	 * @return mixed The callback response.
 	 */
 	public function dispatch() {
-		return $this->has_callback() ? call_user_func_array( $this->get_callback()->get_callable(), array( $this ) ) : null;
+		return $this->has_callback() ? call_user_func_array( $this->get_callback()->get_callable(), array( $this ) ) : false;
 	}
 
 }

@@ -82,13 +82,22 @@ class Localisation {
 	}
 
 	/**
+	 * Retrieves the default directory that contains the translations for this plugin.
+	 *
+	 * @return string The default directory that contains the translations.
+	 */
+	public static function get_default_language_directory() {
+		return Plugin_Name::get_plugin_path( 'languages' );
+	}
+
+	/**
 	 * Retrieves the directory containing all of the language conversions.
 	 *
 	 * @return string The directory containing all of the language conversions.
 	 */
 	public static function get_language_directory() {
 		if ( ! self::$is_language_directory_set ) {
-			self::set_language_directory( Plugin_Name::get_plugin_path( 'languages' ) );
+			self::set_language_directory( self::get_default_language_directory() );
 		}
 		return self::$language_directory;
 	}

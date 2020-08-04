@@ -155,13 +155,22 @@ class Requirements {
 	}
 
 	/**
+	 * Retrieves the default plugin requirements.
+	 *
+	 * @return array An array of the default requirements.
+	 */
+	public static function get_default_requirements() {
+		return Config::get_config( 'requirements' );
+	}
+
+	/**
 	 * Retrieves all of the plugin requirement options.
 	 *
 	 * @return array An array containing all of the plugin requirement options.
 	 */
 	public static function get_requirements() {
 		if ( ! self::$are_requirements_set ) {
-			self::set_requirements( Config::get_config( 'requirements' ) );
+			self::set_requirements( self::get_default_requirements() );
 		}
 		return self::$requirements;
 	}

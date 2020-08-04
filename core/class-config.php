@@ -48,6 +48,15 @@ class Config {
 	}
 
 	/**
+	 * Retrieves the default directory that contains the config files and directories for this plugin.
+	 *
+	 * @return string The default directory that contains the config files and directories.
+	 */
+	public static function get_default_config_path() {
+		return Plugin_Name::get_plugin_path( 'config/' );
+	}
+
+	/**
 	 * Get the path to the location where the config files are stored.
 	 *
 	 * @param string $path The path to append to the set config path.
@@ -56,7 +65,7 @@ class Config {
 	 */
 	public static function get_config_path( $path = '' ) {
 		if ( ! self::$is_config_path_set ) {
-			self::set_config_path( Plugin_Name::get_plugin_path( 'config/' ) );
+			self::set_config_path( self::get_default_config_path() );
 		}
 		return self::$config_path . $path;
 	}

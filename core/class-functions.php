@@ -39,13 +39,22 @@ class Functions {
 	}
 
 	/**
+	 * Retrieves the default function files within this plugin.
+	 *
+	 * @return array An array containing all of the default function files within this plugin.
+	 */
+	public static function get_default_plugin_function_files() {
+		return glob( Plugin_Name::get_plugin_path( '/functions/functions-*.php' ) );
+	}
+
+	/**
 	 * Retrieves all of the files containing functions within this plugin.
 	 *
 	 * @return array An array of all the files containing functions within this plugin.
 	 */
 	public static function get_plugin_function_files() {
 		if ( ! self::$are_plugin_function_files_set ) {
-			self::set_plugin_function_files( glob( Plugin_Name::get_plugin_path( '/functions/functions-*.php' ) ) );
+			self::set_plugin_function_files( self::get_default_plugin_function_files() );
 		}
 		return self::$plugin_function_files;
 	}

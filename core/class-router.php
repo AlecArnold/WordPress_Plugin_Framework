@@ -89,11 +89,11 @@ class Router {
 	 */
 	public static function get_default_route_options() {
 		return array(
-			'url_path'            => '',
+			'url_path'            => null,
 			'method'              => 'any',
 			'validate_middleware' => false,
 			'order_by'            => 'DESC',
-			'order'               => '',
+			'order'               => null,
 		);
 	}
 
