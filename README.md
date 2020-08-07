@@ -1,4 +1,4 @@
-# WordPress Plugin Framework
+# WordPress Plugin Template
 
 Work in progress...
 
@@ -11,9 +11,9 @@ Work in progress...
 cd <path>/wp-content/plugins
 ```
 
-2. Download the framework.
+2. Download the template.
 ```
-git clone git@github.com:AlecArnold/WordPress_Plugin_Framework.git example-plugin
+git clone git@github.com:AlecArnold/WordPress_Plugin_Template.git example-plugin
 ```
 
 3. Navigate into the newly created plugin directory.
@@ -21,12 +21,12 @@ git clone git@github.com:AlecArnold/WordPress_Plugin_Framework.git example-plugi
 cd example-plugin
 ```
 
-4. Untether your repo from `AlecArnold/WordPress_Plugin_Framework`.
+4. Untether your repo from `AlecArnold/WordPress_Plugin_Template`.
 ```
 git remote rm origin
 ```
 
-5. Remove the "WordPress_Plugin_Framework" `README.md`.
+5. Remove the "WordPress_Plugin_Template" `README.md`.
 ```
 git rm README.md
 ```
