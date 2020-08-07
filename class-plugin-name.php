@@ -12,7 +12,7 @@
  * @package           Plugin_Name
  *
  * @wordpress-plugin
- * Plugin Name:       WordPress Plugin Framework
+ * Plugin Name:       WordPress Plugin Template
  * Plugin URI:        http://example.com/plugin-name-uri/
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
  * Version:           1.0.0
@@ -59,7 +59,7 @@ if ( ! class_exists( 'Plugin_Name' ) ) {
 		 *
 		 * @var string The plugin name.
 		 */
-		const PLUGIN_NAME = 'WordPress Plugin Framework';
+		const PLUGIN_NAME = 'WordPress Plugin Template';
 
 		/**
 		 * The namespace used within this plugin.
