@@ -8,6 +8,7 @@
 namespace Plugin_Name\Core;
 
 use function Plugin_Name\Functions\Array_Utils\array_build_traversable_path;
+use function Plugin_Name\Functions\Array_Utils\array_has_intersect;
 use function Plugin_Name\Functions\Array_Utils\array_traverse;
 
 /**
@@ -36,6 +37,17 @@ class Request {
 	 */
 	public static function get_method() {
 		return isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : 'ANY'; // phpcs:ignore
+	}
+
+	/**
+	 * Determines whether the provided method matches the request method.
+	 *
+	 * @param array|string $method The method/s to check.
+	 *
+	 * @return bool Whether the provided method matches the request method.
+	 */
+	public static function is_method( $method ) {
+		return array_has_intersect( array( 'ANY', self::get_method() ), (array) $method );
 	}
 
 	/**

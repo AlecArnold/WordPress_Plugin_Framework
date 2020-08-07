@@ -37,7 +37,7 @@ function array_validate_items( $callback, $array ) {
  * @param string $regex   The regular expression used to search for matches.
  * @param string $subject The subject of the regular expression search.
  *
- * @return array
+ * @return array An array whether all references of `$matches[%d]` are replaced with the corresponding regex match.
  */
 function array_replace_matches( $array, $regex, $subject ) {
 	preg_match( $regex, $subject, $matches );
@@ -64,13 +64,18 @@ function array_replace_matches( $array, $regex, $subject ) {
 }
 
 /**
+ * Builds a traversable array for the given path.
  *
+ * @param array|string $path      The path to build the traversable array from.
+ * @param string       $delimiter The delimiter used to parse the path.
+ *
+ * @return array The path formatted as a traversable array.
  */
-function array_build_traversable_path( $path ) {
+function array_build_traversable_path( $path, $delimiter = '.' ) {
 
-	// Covert the path to an array.
+	// Convert the path to an array.
 	if ( is_string( $path ) ) {
-		$path = explode( '.', $path );
+		$path = explode( $delimiter, $path );
 	} elseif ( ! is_array( $path ) ) {
 		$path = array();
 	}
@@ -78,13 +83,13 @@ function array_build_traversable_path( $path ) {
 }
 
 /**
- * Uses an array of keys to traverse an array to find a specific value
+ * Uses an array of keys to traverse an array to find a specific value.
  *
  * @param array $array   The array to traverse.
  * @param array $path    The path to an individual item within the provided array.
  * @param mixed $default The default value to return when no match is found.
  *
- * @return array|mixed
+ * @return array|mixed The value of the array item that matches the provided path.
  */
 function array_traverse( $array, $path, $default = null ) {
 
@@ -154,4 +159,16 @@ function array_column_keep_keys( $array, $key ) {
 		},
 		$array
 	);
+}
+
+/**
+ * Determines whether there is an array item from both provided arrays that match.
+ *
+ * @param array $array_1 The first array to compare with.
+ * @param array $array_2 The second array to compare with.
+ *
+ * @return bool Whether there is an array item from both provided arrays that match.
+ */
+function array_has_intersect( $array_1, $array_2 ) {
+	return ! empty( array_intersect( $array_1, $array_2 ) );
 }

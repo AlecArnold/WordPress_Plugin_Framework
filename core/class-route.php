@@ -175,7 +175,7 @@ class Route {
 	 */
 	public function get_url_path_regex() {
 		if ( ! $this->is_url_path_regex_prepared ) {
-			$prepared_url_path_regex = $this->prepare_url_path_regex( $this->get_route_option( 'url_path_regex' ) );
+			$prepared_url_path_regex = $this->prepare_url_path_regex( $this->get_route_option( 'url_path_regex', $this->url_path_regex ) );
 			$this->set_url_path_regex( $prepared_url_path_regex, true );
 		}
 		return $this->url_path_regex;
@@ -234,7 +234,7 @@ class Route {
 	 */
 	public function get_method() {
 		if ( ! $this->is_method_prepared ) {
-			$prepared_method = $this->prepare_method( $this->get_route_option( 'method' ) );
+			$prepared_method = $this->prepare_method( $this->get_route_option( 'method', $this->method ) );
 			$this->set_method( $prepared_method, true );
 		}
 		return $this->method;
@@ -294,7 +294,7 @@ class Route {
 	 */
 	public function get_middleware() {
 		if ( ! $this->is_middleware_prepared ) {
-			$prepared_middleware = $this->prepare_middleware( $this->get_route_option( 'middleware' ) );
+			$prepared_middleware = $this->prepare_middleware( $this->get_route_option( 'middleware', $this->middleware ) );
 			$this->set_middleware( $prepared_middleware, true );
 		}
 		return $this->middleware;
@@ -364,8 +364,8 @@ class Route {
 	 */
 	public function get_callback() {
 		if ( ! $this->is_callback_prepared ) {
-			$prepared_callback = $this->prepare_callback( $this->get_route_option( 'callback' ) );
-			$this->set_callback( $prepared_callback );
+			$prepared_callback = $this->prepare_callback( $this->get_route_option( 'callback', $this->callback ) );
+			$this->set_callback( $prepared_callback, true );
 		}
 		return $this->callback;
 	}
@@ -391,7 +391,7 @@ class Route {
 	 */
 	public function get_priority() {
 		if ( ! $this->is_priority_set ) {
-			$this->set_priority( $this->get_route_option( 'priority', 10 ) );
+			$this->set_priority( $this->get_route_option( 'priority', $this->priority ) );
 		}
 		return $this->priority;
 	}

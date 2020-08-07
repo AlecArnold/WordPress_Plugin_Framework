@@ -7,6 +7,8 @@
 
 namespace Plugin_Name\Core;
 
+use function Plugin_Name\Functions\Array_Utils\array_has_intersect;
+
 /**
  * Handles all of the routes within this plugin.
  */
@@ -72,17 +74,6 @@ class Router {
 	}
 
 	/**
-	 * Retrieves routes defined within the system which can also be filtered and ordered using options.
-	 *
-	 * @param array $options The options to use to filter and order the routes.
-	 *
-	 * @return array An array containing all of the matching routes.
-	 */
-	public static function get_routes( $options = array() ) {
-		return apply_filters( 'plugin_name_filter_routes', self::$routes, array_merge( self::get_default_route_options(), $options ) );
-	}
-
-	/**
 	 * Retrieves the default route options.
 	 *
 	 * @return array The default route options.
@@ -95,6 +86,17 @@ class Router {
 			'order_by'            => 'DESC',
 			'order'               => null,
 		);
+	}
+
+	/**
+	 * Retrieves routes defined within the system which can also be filtered and ordered using options.
+	 *
+	 * @param array $options The options to use to filter and order the routes.
+	 *
+	 * @return array An array containing all of the matching routes.
+	 */
+	public static function get_routes( $options = array() ) {
+		return apply_filters( 'plugin_name_filter_routes', self::$routes, array_merge( self::get_default_route_options(), $options ) );
 	}
 
 	/**
@@ -183,7 +185,7 @@ class Router {
 				 * @return bool Whether the route should be filtered out or not.
 				 */
 				function ( $route ) use ( $options ) {
-					return in_array( $options['method'], $route->get_method(), true );
+					return array_has_intersect( array( 'ANY', $options['method'] ), $route->get_method() );
 				}
 			);
 		}
